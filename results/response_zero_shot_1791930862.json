@@ -1,0 +1,378 @@
+{
+  "strategy": "zero_shot",
+  "results": [
+    {
+      "question": "Which pianos need repair, and where are they?",
+      "strategy": "zero_shot",
+      "sql": "SELECT \n    p.brand AS piano_brand,\n    p.model AS piano_model,\n    p.serial_number AS piano_serial_number,\n    r.room_number AS room_number,\n    b.name AS building_name\nFROM \n    piano p\nJOIN \n    repair_request rr ON p.piano_id = rr.piano_id\nJOIN \n    room r ON p.room_id = r.room_id\nJOIN \n    building b ON r.building_id = b.building_id\nWHERE \n    p.status = 'needs repair' AND rr.status = 'open';",
+      "columns": [
+        "piano_brand",
+        "piano_model",
+        "piano_serial_number",
+        "room_number",
+        "building_name"
+      ],
+      "rows": [
+        [
+          "Yamaha",
+          "U1",
+          "YM-554377",
+          "C-302",
+          "Harris Fine Arts Center"
+        ],
+        [
+          "Baldwin",
+          "Hamilton",
+          "BW-310045",
+          "Lobby",
+          "Wilkinson Student Center"
+        ]
+      ],
+      "answer": "The following pianos need repair:\n\n1. A Yamaha U1 with serial number YM-554377 located in room C-302 of the Harris Fine Arts Center.\n2. A Baldwin Hamilton with serial number BW-310045 located in the Lobby of the Wilkinson Student Center.",
+      "error": null,
+      "tokens": {
+        "input": 910,
+        "output": 169
+      },
+      "cost_usd": 0.000238
+    },
+    {
+      "question": "Which pianos have never been tuned?",
+      "strategy": "zero_shot",
+      "sql": "SELECT p.brand, p.model, p.piano_type, p.serial_number, p.year_made\nFROM piano p\nLEFT JOIN tuning t ON p.piano_id = t.piano_id\nWHERE t.piano_id IS NULL;",
+      "columns": [
+        "brand",
+        "model",
+        "piano_type",
+        "serial_number",
+        "year_made"
+      ],
+      "rows": [
+        [
+          "Yamaha",
+          "P-125",
+          "digital",
+          "YM-D77120",
+          2020
+        ],
+        [
+          "Steinway & Sons",
+          "Model M",
+          "baby grand",
+          "ST-071122",
+          1989
+        ],
+        [
+          "Roland",
+          "FP-30X",
+          "digital",
+          "RL-D55671",
+          2022
+        ]
+      ],
+      "answer": "The following pianos have never been tuned: \n\n1. Yamaha P-125 (digital, serial number YM-D77120, year made 2020)\n2. Steinway & Sons Model M (baby grand, serial number ST-071122, year made 1989)\n3. Roland FP-30X (digital, serial number RL-D55671, year made 2022)",
+      "error": null,
+      "tokens": {
+        "input": 858,
+        "output": 132
+      },
+      "cost_usd": 0.000208
+    },
+    {
+      "question": "Who tuned the Steinway in the concert hall most recently?",
+      "strategy": "zero_shot",
+      "sql": "SELECT t.name AS technician_name, tu.tuning_date\nFROM tuning tu\nJOIN piano p ON tu.piano_id = p.piano_id\nJOIN room r ON p.room_id = r.room_id\nJOIN technician t ON tu.technician_id = t.technician_id\nWHERE p.brand = 'Steinway' AND r.room_type = 'concert hall'\nORDER BY tu.tuning_date DESC\nLIMIT 1;",
+      "columns": [
+        "technician_name",
+        "tuning_date"
+      ],
+      "rows": [],
+      "answer": "No matching records were found.",
+      "error": null,
+      "tokens": {
+        "input": 827,
+        "output": 98
+      },
+      "cost_usd": 0.000183
+    },
+    {
+      "question": "Which technicians are not certified, and which pianos did they tune?",
+      "strategy": "zero_shot",
+      "sql": "SELECT t.name AS technician_name, p.brand AS piano_brand, p.model AS piano_model, tu.tuning_date\nFROM technician t\nJOIN tuning tu ON t.technician_id = tu.technician_id\nJOIN piano p ON tu.piano_id = p.piano_id\nWHERE t.is_certified = 0;",
+      "columns": [
+        "technician_name",
+        "piano_brand",
+        "piano_model",
+        "tuning_date"
+      ],
+      "rows": [
+        [
+          "Tom Alvarez",
+          "Baldwin",
+          "Hamilton",
+          "2024-05-14"
+        ],
+        [
+          "Tom Alvarez",
+          "Young Chang",
+          "G-157",
+          "2025-11-02"
+        ],
+        [
+          "Tom Alvarez",
+          "Baldwin",
+          "Acrosonic",
+          "2023-09-09"
+        ]
+      ],
+      "answer": "The technician who is not certified is Tom Alvarez. He tuned the following pianos:\n\n1. Baldwin Hamilton on May 14, 2024\n2. Young Chang G-157 on November 2, 2025\n3. Baldwin Acrosonic on September 9, 2023",
+      "error": null,
+      "tokens": {
+        "input": 884,
+        "output": 132
+      },
+      "cost_usd": 0.000212
+    },
+    {
+      "question": "Which students have reported more than one repair request?",
+      "strategy": "zero_shot",
+      "sql": "SELECT s.name, s.email, COUNT(rr.request_id) AS request_count\nFROM student s\nJOIN repair_request rr ON s.student_id = rr.student_id\nWHERE rr.student_id IS NOT NULL\nGROUP BY s.student_id\nHAVING COUNT(rr.request_id) > 1;",
+      "columns": [
+        "name",
+        "email",
+        "request_count"
+      ],
+      "rows": [],
+      "answer": "No matching records were found.",
+      "error": null,
+      "tokens": {
+        "input": 793,
+        "output": 68
+      },
+      "cost_usd": 0.00016
+    },
+    {
+      "question": "How many pianos are in each building?",
+      "strategy": "zero_shot",
+      "sql": "SELECT b.name AS building_name, COUNT(p.piano_id) AS piano_count\nFROM building b\nLEFT JOIN room r ON b.building_id = r.building_id\nLEFT JOIN piano p ON r.room_id = p.room_id\nGROUP BY b.building_id, b.name;",
+      "columns": [
+        "building_name",
+        "piano_count"
+      ],
+      "rows": [
+        [
+          "Harris Fine Arts Center",
+          6
+        ],
+        [
+          "Wilkinson Student Center",
+          2
+        ],
+        [
+          "Harold B. Lee Library",
+          1
+        ],
+        [
+          "Joseph Smith Building",
+          2
+        ],
+        [
+          "Brimhall Building",
+          2
+        ]
+      ],
+      "answer": "The number of pianos in each building is as follows: \n\n- Harris Fine Arts Center: 6 pianos\n- Wilkinson Student Center: 2 pianos\n- Harold B. Lee Library: 1 piano\n- Joseph Smith Building: 2 pianos\n- Brimhall Building: 2 pianos",
+      "error": null,
+      "tokens": {
+        "input": 837,
+        "output": 128
+      },
+      "cost_usd": 0.000202
+    },
+    {
+      "question": "Which pianos haven't been tuned in the last 6 months?",
+      "strategy": "zero_shot",
+      "sql": "SELECT p.brand, p.model, p.piano_type, p.serial_number, p.year_made, p.status\nFROM piano p\nLEFT JOIN tuning t ON p.piano_id = t.piano_id AND t.tuning_date >= date('2026-10-12', '-6 months')\nWHERE t.tuning_id IS NULL;",
+      "columns": [
+        "brand",
+        "model",
+        "piano_type",
+        "serial_number",
+        "year_made",
+        "status"
+      ],
+      "rows": [
+        [
+          "Yamaha",
+          "U1",
+          "upright",
+          "YM-554377",
+          2008,
+          "needs repair"
+        ],
+        [
+          "Baldwin",
+          "Hamilton",
+          "upright",
+          "BW-310045",
+          1985,
+          "needs repair"
+        ],
+        [
+          "Yamaha",
+          "P-125",
+          "digital",
+          "YM-D77120",
+          2020,
+          "active"
+        ],
+        [
+          "Young Chang",
+          "G-157",
+          "baby grand",
+          "YC-440981",
+          2001,
+          "active"
+        ],
+        [
+          "Yamaha",
+          "U3",
+          "upright",
+          "YM-300998",
+          1995,
+          "active"
+        ],
+        [
+          "Baldwin",
+          "Acrosonic",
+          "upright",
+          "BW-210077",
+          1978,
+          "retired"
+        ],
+        [
+          "Steinway & Sons",
+          "Model M",
+          "baby grand",
+          "ST-071122",
+          1989,
+          "retired"
+        ],
+        [
+          "Roland",
+          "FP-30X",
+          "digital",
+          "RL-D55671",
+          2022,
+          "active"
+        ]
+      ],
+      "answer": "The following pianos haven't been tuned in the last 6 months:\n\n1. Yamaha U1 (upright, serial number: YM-554377, year made: 2008, status: needs repair)\n2. Baldwin Hamilton (upright, serial number: BW-310045, year made: 1985, status: needs repair)\n3. Yamaha P-125 (digital, serial number: YM-D77120, year made: 2020, status: active)\n4. Young Chang G-157 (baby grand, serial number: YC-440981, year made: 2001, status: active)\n5. Yamaha U3 (upright, serial number: YM-300998, year made: 1995, status: active)\n6. Baldwin Acrosonic (upright, serial number: BW-210077, year made: 1978, status: retired)\n7. Steinway & Sons Model M (baby grand, serial number: ST-071122, year made: 1989, status: retired)\n8. Roland FP-30X (digital, serial number: RL-D55671, year made: 2022, status: active)",
+      "error": null,
+      "tokens": {
+        "input": 1035,
+        "output": 320
+      },
+      "cost_usd": 0.000347
+    },
+    {
+      "question": "Which students have reserved a piano that currently needs repair?",
+      "strategy": "zero_shot",
+      "sql": "SELECT s.name AS student_name, s.email AS student_email, p.brand AS piano_brand, p.model AS piano_model\nFROM reservation r\nJOIN piano p ON r.piano_id = p.piano_id\nJOIN student s ON r.student_id = s.student_id\nWHERE p.status = 'needs repair';",
+      "columns": [
+        "student_name",
+        "student_email",
+        "piano_brand",
+        "piano_model"
+      ],
+      "rows": [
+        [
+          "Ben Okafor",
+          "ben.okafor@example.edu",
+          "Yamaha",
+          "U1"
+        ]
+      ],
+      "answer": "Ben Okafor has reserved a Yamaha U1 piano that currently needs repair.",
+      "error": null,
+      "tokens": {
+        "input": 830,
+        "output": 83
+      },
+      "cost_usd": 0.000174
+    },
+    {
+      "question": "Which piano has the most open repair requests?",
+      "strategy": "zero_shot",
+      "sql": "SELECT p.brand, p.model, COUNT(rr.request_id) AS open_requests\nFROM piano p\nJOIN repair_request rr ON p.piano_id = rr.piano_id\nWHERE rr.status = 'open'\nGROUP BY p.piano_id\nORDER BY open_requests DESC\nLIMIT 1;",
+      "columns": [
+        "brand",
+        "model",
+        "open_requests"
+      ],
+      "rows": [
+        [
+          "Young Chang",
+          "G-157",
+          1
+        ]
+      ],
+      "answer": "The piano with the most open repair requests is a Young Chang G-157, with 1 open request.",
+      "error": null,
+      "tokens": {
+        "input": 803,
+        "output": 85
+      },
+      "cost_usd": 0.000171
+    },
+    {
+      "question": "Can I reserve a piano in the Brimhall Building?",
+      "strategy": "zero_shot",
+      "sql": "SELECT r.room_number, b.name AS building_name, p.brand, p.model\nFROM reservation res\nJOIN piano p ON res.piano_id = p.piano_id\nJOIN room r ON p.room_id = r.room_id\nJOIN building b ON r.building_id = b.building_id\nWHERE b.name = 'Brimhall Building' \n  AND res.start_time > '2026-10-12' \n  AND res.end_time < '2026-10-12';",
+      "columns": [
+        "room_number",
+        "building_name",
+        "brand",
+        "model"
+      ],
+      "rows": [],
+      "answer": "No matching records were found.",
+      "error": null,
+      "tokens": {
+        "input": 844,
+        "output": 111
+      },
+      "cost_usd": 0.000193
+    },
+    {
+      "question": "Which pianos are in storage?",
+      "strategy": "zero_shot",
+      "sql": "SELECT p.brand, p.model, p.piano_type, p.serial_number, p.year_made, p.status\nFROM piano p\nWHERE p.room_id IS NULL;",
+      "columns": [
+        "brand",
+        "model",
+        "piano_type",
+        "serial_number",
+        "year_made",
+        "status"
+      ],
+      "rows": [
+        [
+          "Steinway & Sons",
+          "Model M",
+          "baby grand",
+          "ST-071122",
+          1989,
+          "retired"
+        ]
+      ],
+      "answer": "The only piano in storage is a Steinway & Sons Model M baby grand, serial number ST-071122, made in 1989, and it is retired.",
+      "error": null,
+      "tokens": {
+        "input": 806,
+        "output": 73
+      },
+      "cost_usd": 0.000165
+    }
+  ]
+}

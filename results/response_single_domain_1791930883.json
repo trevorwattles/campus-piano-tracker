@@ -1,0 +1,389 @@
+{
+  "strategy": "single_domain",
+  "results": [
+    {
+      "question": "Which pianos need repair, and where are they?",
+      "strategy": "single_domain",
+      "sql": "SELECT p.piano_id, p.brand, p.model, r.room_number, b.name AS building_name\nFROM piano p\nJOIN repair_request rr ON p.piano_id = rr.piano_id\nJOIN room r ON p.room_id = r.room_id\nJOIN building b ON r.building_id = b.building_id\nWHERE rr.status != 'resolved' AND rr.reported_date <= '2026-10-12';",
+      "columns": [
+        "piano_id",
+        "brand",
+        "model",
+        "room_number",
+        "building_name"
+      ],
+      "rows": [
+        [
+          3,
+          "Yamaha",
+          "U1",
+          "C-302",
+          "Harris Fine Arts Center"
+        ],
+        [
+          3,
+          "Yamaha",
+          "U1",
+          "C-302",
+          "Harris Fine Arts Center"
+        ],
+        [
+          6,
+          "Baldwin",
+          "Hamilton",
+          "Lobby",
+          "Wilkinson Student Center"
+        ],
+        [
+          9,
+          "Young Chang",
+          "G-157",
+          "B-101",
+          "Joseph Smith Building"
+        ],
+        [
+          10,
+          "Yamaha",
+          "U3",
+          "B-102",
+          "Joseph Smith Building"
+        ]
+      ],
+      "answer": "The following pianos need repair:\n\n1. Yamaha U1 located in room C-302, Harris Fine Arts Center\n2. Baldwin Hamilton located in the Lobby, Wilkinson Student Center\n3. Young Chang in room G-157, Joseph Smith Building\n4. Yamaha U3 in room B-102, Joseph Smith Building",
+      "error": null,
+      "tokens": {
+        "input": 1065,
+        "output": 157
+      },
+      "cost_usd": 0.000254
+    },
+    {
+      "question": "Which pianos have never been tuned?",
+      "strategy": "single_domain",
+      "sql": "SELECT p.piano_id, p.brand, p.model, r.room_number, b.name AS building_name\nFROM piano p\nLEFT JOIN tuning t ON p.piano_id = t.piano_id\nLEFT JOIN room r ON p.room_id = r.room_id\nLEFT JOIN building b ON r.building_id = b.building_id\nWHERE t.tuning_id IS NULL;",
+      "columns": [
+        "piano_id",
+        "brand",
+        "model",
+        "room_number",
+        "building_name"
+      ],
+      "rows": [
+        [
+          7,
+          "Yamaha",
+          "P-125",
+          "3rd Floor",
+          "Wilkinson Student Center"
+        ],
+        [
+          13,
+          "Steinway & Sons",
+          "Model M",
+          null,
+          null
+        ],
+        [
+          14,
+          "Roland",
+          "FP-30X",
+          "C-301",
+          "Harris Fine Arts Center"
+        ]
+      ],
+      "answer": "The pianos that have never been tuned are:\n\n1. Yamaha P-125 located in room 3rd Floor, Wilkinson Student Center\n2. Steinway & Sons Model M (room number and building name not available)\n3. Roland FP-30X located in room C-301, Harris Fine Arts Center",
+      "error": null,
+      "tokens": {
+        "input": 1005,
+        "output": 144
+      },
+      "cost_usd": 0.000237
+    },
+    {
+      "question": "Who tuned the Steinway in the concert hall most recently?",
+      "strategy": "single_domain",
+      "sql": "SELECT t.name AS technician_name, t.phone, tu.tuning_date\nFROM tuning tu\nJOIN piano p ON tu.piano_id = p.piano_id\nJOIN technician t ON tu.technician_id = t.technician_id\nJOIN room r ON p.room_id = r.room_id\nWHERE p.brand = 'Steinway' AND r.room_type = 'concert hall'\nORDER BY tu.tuning_date DESC\nLIMIT 1;",
+      "columns": [
+        "technician_name",
+        "phone",
+        "tuning_date"
+      ],
+      "rows": [],
+      "answer": "No matching records were found.",
+      "error": null,
+      "tokens": {
+        "input": 955,
+        "output": 101
+      },
+      "cost_usd": 0.000204
+    },
+    {
+      "question": "Which technicians are not certified, and which pianos did they tune?",
+      "strategy": "single_domain",
+      "sql": "SELECT t.name AS technician_name, p.brand AS piano_brand, p.model AS piano_model\nFROM technician t\nJOIN tuning tu ON t.technician_id = tu.technician_id\nJOIN piano p ON tu.piano_id = p.piano_id\nWHERE t.is_certified = 0;",
+      "columns": [
+        "technician_name",
+        "piano_brand",
+        "piano_model"
+      ],
+      "rows": [
+        [
+          "Tom Alvarez",
+          "Baldwin",
+          "Hamilton"
+        ],
+        [
+          "Tom Alvarez",
+          "Young Chang",
+          "G-157"
+        ],
+        [
+          "Tom Alvarez",
+          "Baldwin",
+          "Acrosonic"
+        ]
+      ],
+      "answer": "The technician who is not certified is Tom Alvarez. He tuned the following pianos: a Baldwin Hamilton, a Young Chang G-157, and a Baldwin Acrosonic.",
+      "error": null,
+      "tokens": {
+        "input": 972,
+        "output": 102
+      },
+      "cost_usd": 0.000207
+    },
+    {
+      "question": "Which students have reported more than one repair request?",
+      "strategy": "single_domain",
+      "sql": "SELECT s.student_id, s.name, COUNT(rr.request_id) AS request_count\nFROM student s\nJOIN repair_request rr ON s.student_id = rr.student_id\nGROUP BY s.student_id, s.name\nHAVING COUNT(rr.request_id) > 1;",
+      "columns": [
+        "student_id",
+        "name",
+        "request_count"
+      ],
+      "rows": [],
+      "answer": "No matching records were found.",
+      "error": null,
+      "tokens": {
+        "input": 912,
+        "output": 64
+      },
+      "cost_usd": 0.000175
+    },
+    {
+      "question": "How many pianos are in each building?",
+      "strategy": "single_domain",
+      "sql": "SELECT b.name AS building_name, COUNT(p.piano_id) AS piano_count\nFROM building b\nLEFT JOIN room r ON b.building_id = r.building_id\nLEFT JOIN piano p ON r.room_id = p.room_id\nGROUP BY b.building_id, b.name;",
+      "columns": [
+        "building_name",
+        "piano_count"
+      ],
+      "rows": [
+        [
+          "Harris Fine Arts Center",
+          6
+        ],
+        [
+          "Wilkinson Student Center",
+          2
+        ],
+        [
+          "Harold B. Lee Library",
+          1
+        ],
+        [
+          "Joseph Smith Building",
+          2
+        ],
+        [
+          "Brimhall Building",
+          2
+        ]
+      ],
+      "answer": "The number of pianos in each building is as follows: Harris Fine Arts Center has 6 pianos, Wilkinson Student Center has 2 pianos, Harold B. Lee Library has 1 piano, Joseph Smith Building has 2 pianos, and Brimhall Building has 2 pianos.",
+      "error": null,
+      "tokens": {
+        "input": 959,
+        "output": 124
+      },
+      "cost_usd": 0.000218
+    },
+    {
+      "question": "Which pianos haven't been tuned in the last 6 months?",
+      "strategy": "single_domain",
+      "sql": "SELECT p.piano_id, p.brand, p.model\nFROM piano p\nLEFT JOIN tuning t ON p.piano_id = t.piano_id\nWHERE t.tuning_date IS NULL OR t.tuning_date < DATE('2026-10-12', '-6 months');",
+      "columns": [
+        "piano_id",
+        "brand",
+        "model"
+      ],
+      "rows": [
+        [
+          1,
+          "Steinway & Sons",
+          "Model D"
+        ],
+        [
+          1,
+          "Steinway & Sons",
+          "Model D"
+        ],
+        [
+          2,
+          "Yamaha",
+          "U1"
+        ],
+        [
+          3,
+          "Yamaha",
+          "U1"
+        ],
+        [
+          5,
+          "Steinway & Sons",
+          "Model B"
+        ],
+        [
+          6,
+          "Baldwin",
+          "Hamilton"
+        ],
+        [
+          7,
+          "Yamaha",
+          "P-125"
+        ],
+        [
+          9,
+          "Young Chang",
+          "G-157"
+        ],
+        [
+          10,
+          "Yamaha",
+          "U3"
+        ],
+        [
+          12,
+          "Baldwin",
+          "Acrosonic"
+        ],
+        [
+          13,
+          "Steinway & Sons",
+          "Model M"
+        ],
+        [
+          14,
+          "Roland",
+          "FP-30X"
+        ]
+      ],
+      "answer": "The following pianos haven't been tuned in the last 6 months:\n\n1. Steinway & Sons Model D\n2. Yamaha U1\n3. Yamaha U1\n4. Steinway & Sons Model B\n5. Baldwin Hamilton\n6. Yamaha P-125\n7. Young Chang G-157\n8. Yamaha U3\n9. Baldwin Acrosonic\n10. Steinway & Sons Model M\n11. Roland FP-30X",
+      "error": null,
+      "tokens": {
+        "input": 1072,
+        "output": 155
+      },
+      "cost_usd": 0.000254
+    },
+    {
+      "question": "Which students have reserved a piano that currently needs repair?",
+      "strategy": "single_domain",
+      "sql": "SELECT s.student_id, s.name, s.email, p.brand, p.model, r.room_number\nFROM reservation res\nJOIN piano p ON res.piano_id = p.piano_id\nJOIN repair_request rr ON p.piano_id = rr.piano_id\nJOIN student s ON res.student_id = s.student_id\nJOIN room r ON p.room_id = r.room_id\nWHERE p.status = 'needs repair' AND rr.status = 'open';",
+      "columns": [
+        "student_id",
+        "name",
+        "email",
+        "brand",
+        "model",
+        "room_number"
+      ],
+      "rows": [
+        [
+          2,
+          "Ben Okafor",
+          "ben.okafor@example.edu",
+          "Yamaha",
+          "U1",
+          "C-302"
+        ]
+      ],
+      "answer": "The student who has reserved a piano that currently needs repair is Ben Okafor.",
+      "error": null,
+      "tokens": {
+        "input": 992,
+        "output": 114
+      },
+      "cost_usd": 0.000217
+    },
+    {
+      "question": "Which piano has the most open repair requests?",
+      "strategy": "single_domain",
+      "sql": "SELECT p.piano_id, p.brand, p.model, COUNT(rr.request_id) AS open_requests\nFROM piano p\nJOIN repair_request rr ON p.piano_id = rr.piano_id\nWHERE rr.status = 'open'\nGROUP BY p.piano_id\nORDER BY open_requests DESC\nLIMIT 1;",
+      "columns": [
+        "piano_id",
+        "brand",
+        "model",
+        "open_requests"
+      ],
+      "rows": [
+        [
+          9,
+          "Young Chang",
+          "G-157",
+          1
+        ]
+      ],
+      "answer": "The piano with the most open repair requests is a Young Chang G-157, with 1 open request.",
+      "error": null,
+      "tokens": {
+        "input": 938,
+        "output": 90
+      },
+      "cost_usd": 0.000195
+    },
+    {
+      "question": "Can I reserve a piano in the Brimhall Building?",
+      "strategy": "single_domain",
+      "sql": "SELECT p.piano_id, p.brand, p.model, r.room_number\nFROM piano p\nJOIN room r ON p.room_id = r.room_id\nJOIN building b ON r.building_id = b.building_id\nWHERE b.abbreviation = 'BB' AND p.status = 'active';",
+      "columns": [
+        "piano_id",
+        "brand",
+        "model",
+        "room_number"
+      ],
+      "rows": [],
+      "answer": "No matching records were found.",
+      "error": null,
+      "tokens": {
+        "input": 927,
+        "output": 71
+      },
+      "cost_usd": 0.000182
+    },
+    {
+      "question": "Which pianos are in storage?",
+      "strategy": "single_domain",
+      "sql": "SELECT p.piano_id, p.brand, p.model\nFROM piano p\nWHERE p.room_id IS NULL;",
+      "columns": [
+        "piano_id",
+        "brand",
+        "model"
+      ],
+      "rows": [
+        [
+          13,
+          "Steinway & Sons",
+          "Model M"
+        ]
+      ],
+      "answer": "The piano in storage is a Steinway & Sons Model M with piano ID 13.",
+      "error": null,
+      "tokens": {
+        "input": 889,
+        "output": 45
+      },
+      "cost_usd": 0.00016
+    }
+  ]
+}

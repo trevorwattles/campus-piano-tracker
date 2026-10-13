@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campus Piano Tracker</title>
+<style>
+  :root { --bg:#fafaf7; --fg:#1d1d1b; --muted:#6b6b66; --card:#fff; --line:#e3e3dc; --accent:#8a3b2b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#161615; --fg:#ececE6; --muted:#9a9a92; --card:#1f1f1d; --line:#33332f; --accent:#e0836f; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui, sans-serif; }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  p.sub { margin: 0 0 24px; color: var(--muted); }
+  form { display:flex; flex-direction:column; gap:10px; }
+  textarea { width:100%; padding:12px; font:inherit; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:8px; resize:vertical; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  select, button { font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:inherit; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); cursor:pointer; }
+  button:disabled { opacity:.6; cursor:wait; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 24px; }
+  .chip { cursor:pointer; font-size:.85rem; padding:4px 10px; border-radius:999px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .card h2 { margin:0 0 8px; font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .answer { font-size:1.1rem; }
+  pre { margin:0; overflow-x:auto; font-size:.85rem; }
+  table { border-collapse:collapse; width:100%; font-size:.9rem; }
+  .scroll { overflow-x:auto; }
+  th, td { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .err { color:#c0392b; }
+  .meta { color:var(--muted); font-size:.8rem; }
+  details { margin-top:24px; color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Campus Piano Tracker</h1>
+  <p class="sub">Ask a question about the pianos, rooms, tunings and repairs in plain English.</p>
+
+  <form id="form">
+    <textarea id="q" rows="2" placeholder="e.g. Which pianos need repair?" required></textarea>
+    <div class="row">
+      <label for="strategy" class="meta">Prompt strategy</label>
+      <select id="strategy">
+        {% for s in strategies %}<option value="{{ s }}" {% if s == 'single_domain' %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select>
+      <button class="primary" id="go" type="submit">Ask</button>
+    </div>
+  </form>
+
+  <div class="chips">
+    {% for e in examples %}<button type="button" class="chip">{{ e }}</button>{% endfor %}
+  </div>
+
+  <div id="out"></div>
+
+  <details><summary>Database schema</summary><pre>{{ schema }}</pre></details>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "NULL").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+document.querySelectorAll(".chip").forEach(c => c.onclick = () => { $("q").value = c.textContent; $("q").focus(); });
+
+$("form").onsubmit = async e => {
+  e.preventDefault();
+  $("go").disabled = true; $("go").textContent = "Thinking…";
+  $("out").innerHTML = "";
+  try {
+    const res = await fetch("/api/ask", { method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ question: $("q").value, strategy: $("strategy").value }) });
+    render(await res.json());
+  } catch (err) {
+    render({ error: String(err) });
+  }
+  $("go").disabled = false; $("go").textContent = "Ask";
+};
+
+function render(r) {
+  let h = "";
+  if (r.answer) h += `<div class="card"><h2>Answer</h2><div class="answer">${esc(r.answer)}</div></div>`;
+  if (r.error) h += `<div class="card"><h2>Error</h2><div class="err">${esc(r.error)}</div></div>`;
+  if (r.sql) h += `<div class="card"><h2>SQL</h2><pre>${esc(r.sql)}</pre></div>`;
+  if (r.columns && r.columns.length) {
+    h += `<div class="card scroll"><h2>Rows (${r.rows.length})</h2><table><tr>${r.columns.map(c => `<th>${esc(c)}</th>`).join("")}</tr>` +
+      r.rows.map(row => `<tr>${row.map(v => `<td>${esc(v)}</td>`).join("")}</tr>`).join("") + `</table></div>`;
+  }
+  if (r.tokens) h += `<div class="meta">${r.tokens.input} in / ${r.tokens.output} out tokens · $${r.cost_usd}</div>`;
+  $("out").innerHTML = h;
+}
+</script>
+</body>
+</html>

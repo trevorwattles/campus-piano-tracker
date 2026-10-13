@@ -70,6 +70,33 @@ Cross-domain was the most accurate. It was also the only strategy that understoo
 
 One question tricked all three strategies in a quiet way. *"Which piano has the most open repair requests?"* is actually a 3-way tie (1 open request each). Every strategy used `LIMIT 1` and confidently named just the Young Chang.
 
+## Extra experiment: right answer, wrong SQL
+
+**Question**: Which piano has gone the longest without being tuned?
+
+**GPT SQL Response** (zero-shot; cross-domain wrote the same thing):
+```sql
+SELECT p.brand, p.model, p.serial_number, MIN(t.tuning_date) AS last_tuning_date
+FROM piano p
+LEFT JOIN tuning t ON p.piano_id = t.piano_id
+GROUP BY p.piano_id
+ORDER BY last_tuning_date ASC
+LIMIT 1;
+```
+
+SQL Result: `[('Yamaha', 'P-125', 'YM-D77120', None)]`
+
+**Friendly Response**: The piano that has gone the longest without being tuned is a Yamaha P-125 with the serial number YM-D77120, and it has never been tuned.
+
+All three strategies gave this answer, and it *sounds* right, but zero-shot and cross-domain got there by luck:
+
+- They named the column `last_tuning_date` but computed `MIN(tuning_date)`, which is the piano's **first** tuning. The "last" tuning needs `MAX`. Only single-domain wrote `MAX`.
+- The query still landed on the right kind of answer because SQLite sorts `NULL` first in `ORDER BY ... ASC`, so never-tuned pianos come out on top no matter what. Without the never-tuned pianos, the `MIN` version would rank pianos by when they were *first* tuned, which is wrong.
+- `LIMIT 1` hides a 3-way tie: the Yamaha P-125, the Roland FP-30X and the stored Steinway Model M have all never been tuned.
+- The model doesn't know that the P-125 is a **digital** piano, which never needs tuning. The most useful real answer is probably "the Baldwin Acrosonic, last tuned 2023-09-09," or the stored Steinway.
+
+This was the scariest result: a confident, correct-sounding answer built on SQL with a logic bug. You'd only catch it by reading the query.
+
 ## Cost
 
 All 33 runs (11 questions × 3 strategies, two GPT calls each) cost **$0.0075** total, about **$0.0002 per question**, with `gpt-4o-mini` at $0.15 / $0.60 per million input/output tokens. Each prompt was roughly 800–1,200 input tokens, mostly the schema. Cost is basically a non-issue at this scale.

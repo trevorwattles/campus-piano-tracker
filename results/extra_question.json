@@ -1,0 +1,83 @@
+{
+  "question": "Which piano has gone the longest without being tuned?",
+  "results": [
+    {
+      "question": "Which piano has gone the longest without being tuned?",
+      "strategy": "zero_shot",
+      "sql": "SELECT p.brand, p.model, p.serial_number, MIN(t.tuning_date) AS last_tuning_date\nFROM piano p\nLEFT JOIN tuning t ON p.piano_id = t.piano_id\nGROUP BY p.piano_id\nORDER BY last_tuning_date ASC\nLIMIT 1;",
+      "columns": [
+        "brand",
+        "model",
+        "serial_number",
+        "last_tuning_date"
+      ],
+      "rows": [
+        [
+          "Yamaha",
+          "P-125",
+          "YM-D77120",
+          null
+        ]
+      ],
+      "answer": "The piano that has gone the longest without being tuned is a Yamaha P-125 with the serial number YM-D77120, and it has never been tuned.",
+      "error": null,
+      "tokens": {
+        "input": 1541,
+        "output": 159
+      },
+      "cost_usd": 0.000327
+    },
+    {
+      "question": "Which piano has gone the longest without being tuned?",
+      "strategy": "single_domain",
+      "sql": "SELECT p.piano_id, p.brand, p.model, MAX(t.tuning_date) AS last_tuning_date\nFROM piano p\nLEFT JOIN tuning t ON p.piano_id = t.piano_id\nGROUP BY p.piano_id\nORDER BY last_tuning_date ASC\nLIMIT 1;",
+      "columns": [
+        "piano_id",
+        "brand",
+        "model",
+        "last_tuning_date"
+      ],
+      "rows": [
+        [
+          7,
+          "Yamaha",
+          "P-125",
+          null
+        ]
+      ],
+      "answer": "The piano that has gone the longest without being tuned is a Yamaha P-125, and it has never been tuned.",
+      "error": null,
+      "tokens": {
+        "input": 939,
+        "output": 90
+      },
+      "cost_usd": 0.000195
+    },
+    {
+      "question": "Which piano has gone the longest without being tuned?",
+      "strategy": "cross_domain",
+      "sql": "SELECT p.brand, p.model, p.serial_number, MIN(tuning.tuning_date) AS last_tuning_date\nFROM piano p\nLEFT JOIN tuning ON p.piano_id = tuning.piano_id\nGROUP BY p.piano_id\nORDER BY last_tuning_date ASC\nLIMIT 1;",
+      "columns": [
+        "brand",
+        "model",
+        "serial_number",
+        "last_tuning_date"
+      ],
+      "rows": [
+        [
+          "Yamaha",
+          "P-125",
+          "YM-D77120",
+          null
+        ]
+      ],
+      "answer": "The piano that has gone the longest without being tuned is a Yamaha P-125 with the serial number YM-D77120, and it has never been tuned.",
+      "error": null,
+      "tokens": {
+        "input": 1138,
+        "output": 97
+      },
+      "cost_usd": 0.000229
+    }
+  ]
+}

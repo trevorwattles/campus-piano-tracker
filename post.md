@@ -46,7 +46,7 @@ The joins and ordering are perfect, but the brand is stored as `'Steinway & Sons
 
 ## Prompting strategies
 
-I tried all three strategies from the paper, each on the same 11 questions with `gpt-4o-mini`, temperature 0:
+I tried all three strategies from [Chang & Fosler-Lussier, *How to Prompt LLMs for Text-to-SQL* (arXiv:2305.11853)](https://arxiv.org/abs/2305.11853), each on the same 11 questions with `gpt-4o-mini`, temperature 0:
 
 - **zero_shot**: just the schema and the question.
 - **single_domain**: the schema plus 2 example question/SQL pairs from *my* piano database.

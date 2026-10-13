@@ -70,7 +70,7 @@ Cross-domain was the most accurate. It was also the only strategy that understoo
 
 One question tricked all three strategies in a quiet way. *"Which piano has the most open repair requests?"* is actually a 3-way tie (1 open request each). Every strategy used `LIMIT 1` and confidently named just the Young Chang.
 
-## Extra experiment: right answer, wrong SQL
+## My own question: right answer, wrong SQL
 
 **Question**: Which piano has gone the longest without being tuned?
 

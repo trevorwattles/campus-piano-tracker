@@ -1,5 +1,7 @@
 # Campus Piano Tracker
 
+*By Trevor Wattles and Easton Crowther*
+
 My project models the pianos on a university campus: which building and room each piano is in, when it was tuned and by which technician, repair requests students file, and student practice reservations. A music department could use it to decide which pianos need a technician and which ones students can actually use.
 
 <img src="schema.png">
